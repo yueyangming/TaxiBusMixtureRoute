@@ -1,0 +1,7 @@
+# Common
+.idea/
+*.ipynb
+__pycache__/
+
+# Privacy
+UserInfo.inf
