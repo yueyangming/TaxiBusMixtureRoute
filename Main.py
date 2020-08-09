@@ -218,22 +218,34 @@ def CostFunction(BaseDuration, BaseWalkingDistance, BaseTransferTimes,
 
 
 if __name__ == '__main__':
+
+    ### 用户自定义参数区域。
+    OriginAddress = '上海高等研究院'  # 起点地址
+    DstAddress = '世纪大道(地铁站)'  # 终点地址
+    City = '上海'
+    # Cost function weight dict.
+    WeightDict = {
+        'TransferWeight': 5,  # 为了节省一次换乘愿意付出多少银子？
+        'WalkingWeight': 5,  # 为了节省一公里步行距离愿意付出多少银子？
+        'DurationWeight': 0.5  # 为了节省一分钟时间愿意付出多少银子？
+    }
+    ### 用户定义参数区域结束。
     KeyFilename = 'UserInfo.inf'
     BusLineJsonFilename = 'BusLinesStops.json'
+
     # BaseUrl = 'https://restapi.amap.com/v3/geocode/geo?'
-    OriginAddress = '上海高等研究院'
-    DstAddress = '世纪大道(地铁站)'
-    City = '上海'
+    BusRouteBaseUrl = 'https://restapi.amap.com/v3/direction/transit/integrated?'
+
     UserKey = ReadKey(KeyFilename)
     key = UserKey
 
     StartTime = time.time()
 
+    # 第一步，获取起点和终点的 Location坐标。从地址转化为 Location
     OriginLocation = GetLocation(OriginAddress, City, UserKey)
     DstLocation = GetLocation(DstAddress, City, UserKey)
 
     # 第二步，获取默认公交规划（并以此作为当前的最优解）中的路线(和站点)，总时长，步行距离，以及换乘次数。
-    BusRouteBaseUrl = 'https://restapi.amap.com/v3/direction/transit/integrated?'
     BusRouteDict = GetBusRouteDict(OriginLocation, DstLocation, City, key,
                                    BusRouteBaseUrl)
     # 获取总耗时，步行距离，以及换乘次数。
@@ -283,11 +295,6 @@ if __name__ == '__main__':
 
         CurrentPlanDuration = DriveDuration + CurrentBusDuration
         # 4d. 计算cost function
-        WeightDict = {
-            'TransferWeight': 5,
-            'WalkingWeight': 5,
-            'DurationWeight': 0.5
-        }
         CurrentPlanCostFunction = CostFunction(BaseDuration, BaseWalkingDistance, BaseTransferTimes,
                                                CurrentPlanDuration, CurrentBusWalkingDistance, CurrentBusTransferTimes)
 
@@ -301,7 +308,8 @@ if __name__ == '__main__':
                             'TaxiCost': TaxiCost,
                             'Benefit': CurrentBenefit,
                             'CostFunction': CurrentPlanCostFunction}
-    # Print Best Plan
+
+    # 最后的输出。 如果找到了更好的方案
     if BestBenefit > 0:
         print('从{} 到 {}'.format(OriginAddress, DstAddress))
         print('新计划， 打车到 {}地铁站，花费 {}， 效用{}'.format(BestPlan['StopName'], BestPlan['TaxiCost'], BestPlan['Benefit']))
